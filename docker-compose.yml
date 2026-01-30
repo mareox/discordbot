@@ -1,0 +1,28 @@
+services:
+  discordbot-dmr:
+    build: .
+    container_name: discordbot-dmr
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: discordbot-dmr-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_TIMEOUT=300s
+      - WATCHTOWER_ROLLING_RESTART=true
+      - WATCHTOWER_SCHEDULE=0 0 4 */2 * *
+      - DOCKER_API_VERSION=1.44
+    command: discordbot-dmr
