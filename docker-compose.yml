@@ -7,24 +7,38 @@ services:
       - .env
     ports:
       - "3000:3000"
+    labels:
+      - "wud.watch=true"
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
 
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: discordbot-dmr-watchtower
+  wud:
+    image: fmartinou/whats-up-docker:latest
+    container_name: wud-discordbot
     restart: unless-stopped
+    ports:
+      - "3001:3000"                          # WUD Dashboard (3001 to avoid conflict)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - wud-data:/store
     environment:
       - TZ=America/Los_Angeles
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_TIMEOUT=300s
-      - WATCHTOWER_ROLLING_RESTART=true
-      - WATCHTOWER_SCHEDULE=0 0 4 */2 * *
-      - DOCKER_API_VERSION=1.44
-      - WATCHTOWER_NO_STARTUP_MESSAGE=true
-    command: discordbot-dmr
+      - WUD_WATCHER_LOCAL_WATCHBYDEFAULT=false
+      # Discord notifications (set DISCORD_WEBHOOK_URL in .env)
+      - WUD_TRIGGER_DISCORD_1_URL=${DISCORD_WEBHOOK_URL:-}
+      - WUD_TRIGGER_DISCORD_1_BOTUSERNAME=WUD-DiscordBot
+      - WUD_TRIGGER_DISCORD_1_SIMPLETITLE=🐳 DiscordBot Update Available
+      - "WUD_TRIGGER_DISCORD_1_SIMPLEBODY=$${name} can be updated from $${local} to $${remote}"
+    labels:
+      - "wud.watch=true"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  wud-data:
