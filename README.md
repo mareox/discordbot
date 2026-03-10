@@ -1,90 +1,137 @@
-# Discord Bot - Direct Message Responder
+# Discord Bot - Direct Message Router
 
-Forwards incoming Discord WebSocket messages to HTTP
+Forwards Discord direct messages and @mentions to n8n webhooks for automated processing. Includes Express API endpoints for journal review requests and notifications.
 
 ## Features
 
-- Forwards incoming Discord WebSocket messages to HTTP
-- Built with TypeScript for type safety
-- Uses discord.js v14
+- **Direct Message Forwarding**: Routes incoming DMs to n8n webhooks with message context
+- **Channel Mentions**: Captures and forwards @mentions in channels
+- **Journal Review Integration**: Express API endpoint for blog post approval workflows
+- **Notification API**: Send custom Discord notifications programmatically
+- **Type-Safe**: Built with TypeScript and discord.js v14
 
-## Prerequisites
+## Quick Start
 
-- Node.js (v16 or higher)
-- A Discord Bot Token
+### Prerequisites
 
-## Getting Your Discord Bot Token
+- Node.js 20+
+- Discord bot token from [Discord Developer Portal](https://discord.com/developers/applications)
+- n8n webhook URL (optional)
 
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
-2. Click "New Application" and give it a name
-3. Go to the "Bot" section in the left sidebar
-4. Click "Add Bot"
-5. Under the "TOKEN" section, click "Copy" to copy your bot token
-6. In the "Privileged Gateway Intents" section, enable:
-   - MESSAGE CONTENT INTENT (if needed for your bot to read message content)
-7. Go to "OAuth2" > "URL Generator"
-8. Select scopes: `bot`
-9. Select bot permissions: `Send Messages`, `Read Messages/View Channels`
-10. Copy the generated URL and open it in your browser to invite the bot to your server
+### Setup
 
-## Installation
-
-1. Install dependencies:
+1. Clone and install:
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the root directory (you can copy from `.env.example`):
+2. Create `.env` file:
+```bash
+DISCORD_BOT_TOKEN=your_token_here
+N8N_WEBHOOK_URL=https://n8n.loc.mareoxlan.com/webhook/discordbot-dmr
+JOURNAL_CHANNEL_ID=your_channel_id
+API_PORT=3000
 ```
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
+
+3. Build and run:
+```bash
+npm run dev          # Development mode
+npm run build        # TypeScript compilation
+npm start            # Production mode
 ```
 
-Replace `your_discord_bot_token_here` with your actual Discord bot token.
+## Deployment
 
-## Usage
-
-### Build and Run
+### Docker
 
 ```bash
-# Build the TypeScript code
-npm run build
-
-# Start the bot
-npm start
+docker compose up -d --build
+docker compose logs -f discordbot-dmr
 ```
 
-### Development Mode
+### Infrastructure
 
+| Property | Value |
+|----------|-------|
+| Hostname | discordbot-dmr.mareoxlan.local |
+| IP | 192.168.30.68 |
+| VM ID | 30068 (pve-mini3) |
+| Container | Debian 12 LXC on ZFS |
+| Path | `/opt/discordbot-dmr/` |
+
+## Webhook Integration
+
+The bot forwards messages to n8n in the following format:
+
+```json
+{
+  "type": "direct_message",
+  "userId": "123456789",
+  "message": "Message content",
+  "channelId": "987654321"
+}
+```
+
+See [CLAUDE.md](./CLAUDE.md) for n8n workflow setup instructions.
+
+## API Endpoints
+
+### Health Check
 ```bash
-# Build and run in one command
-npm run dev
+GET /health
 ```
 
-## How It Works
+### Journal Review Request
+```bash
+POST /api/journal-review
+Content-Type: application/json
 
-The bot listens for direct messages and automatically replies with "Hallo World" to any message it receives in DMs. It ignores messages from other bots to prevent infinite loops.
-
-## Project Structure
-
+{
+  "draftId": "draft-123",
+  "title": "Blog Post Title",
+  "postType": "journal",
+  "subsystem": "pihole",
+  "filePath": "content/journal/2026-01-30-post.md",
+  "validation": {"score": 85, "qualityLevel": "good", "wordCount": 500},
+  "approveUrl": "https://n8n.loc.mareoxlan.com/webhook/journal-approve?id=draft-123&action=approve",
+  "rejectUrl": "https://n8n.loc.mareoxlan.com/webhook/journal-approve?id=draft-123&action=reject"
+}
 ```
-.
-├── src/
-│   └── bot.ts          # Main bot code
-├── dist/               # Compiled JavaScript (generated)
-├── .env                # Environment variables (create this)
-├── .gitignore          # Git ignore rules
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── README.md           # This file
+
+### Send Notification
+```bash
+POST /api/notify
+Content-Type: application/json
+
+{
+  "title": "Notification Title",
+  "description": "Notification description",
+  "color": 5763719,
+  "fields": [{"name": "URL", "value": "https://example.com"}]
+}
 ```
 
-## Troubleshooting
+## Environment Variables
 
-- **Bot doesn't respond to DMs**: Make sure the bot has the necessary intents enabled in the Discord Developer Portal
-- **"DISCORD_BOT_TOKEN is not defined" error**: Check that your `.env` file exists and contains a valid token
-- **Bot can't read messages**: Ensure you've enabled the MESSAGE CONTENT INTENT in the Discord Developer Portal
+| Variable | Required | Default |
+|----------|----------|---------|
+| `DISCORD_BOT_TOKEN` | Yes | - |
+| `DISCORD_BOT_SECRET` | No | - |
+| `N8N_WEBHOOK_URL` | No | - |
+| `JOURNAL_CHANNEL_ID` | No | - |
+| `API_PORT` | No | 3000 |
 
-## License
+## Discord Bot Configuration
 
-ISC
+1. Enable **Privileged Gateway Intents**:
+   - MESSAGE CONTENT INTENT
 
+2. Bot requires permissions:
+   - Send Messages
+   - Read Messages/View Channels
+
+## Documentation
+
+For detailed configuration, development, and troubleshooting, see [CLAUDE.md](./CLAUDE.md).
+
+Part of [homelab-infra](https://github.com/mareox/homelab-infra)

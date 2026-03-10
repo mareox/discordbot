@@ -83,7 +83,7 @@ ssh -i ~/.ssh/mareox-auth mareox@192.168.30.68
 **Deployment Pattern:**
 ```bash
 # Create tarball locally
-cd /mnt/d/GIT/homelab-infra/discordbot-dmr
+cd ~/GIT/homelab-infra/discordbot-dmr
 tar -cvf /tmp/discordbot-dmr.tar --exclude='.git' --exclude='node_modules' --exclude='dist' .
 
 # Copy to Proxmox host

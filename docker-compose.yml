@@ -22,11 +22,13 @@ services:
     ports:
       - "3001:3000"                          # WUD Dashboard (3001 to avoid conflict)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - wud-data:/store
     environment:
       - TZ=America/Los_Angeles
       - WUD_WATCHER_LOCAL_WATCHBYDEFAULT=false
+      # Docker auto-update trigger (pull + recreate containers)
+      - WUD_TRIGGER_DOCKER_LOCAL_PRUNE=true
       # Discord notifications (set DISCORD_WEBHOOK_URL in .env)
       - WUD_TRIGGER_DISCORD_1_URL=${DISCORD_WEBHOOK_URL:-}
       - WUD_TRIGGER_DISCORD_1_BOTUSERNAME=WUD-DiscordBot
